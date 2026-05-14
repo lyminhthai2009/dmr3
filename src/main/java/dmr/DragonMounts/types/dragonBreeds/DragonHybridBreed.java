@@ -148,25 +148,27 @@ public class DragonHybridBreed implements IDragonBreed {
 
     @Override
     public List<Habitat> getHabitats() {
-        return List.of(); // Habitats wont get used for anything on a hybrid as they are only used for breeding outcomes
+        return List.of(); 
     }
 
-    // BỔ SUNG: Sửa lỗi tràn kỹ năng (Chỉ lấy tối đa 2 kỹ năng cho rồng lai)
+    // FIX CRASH: Xử lý ArrayList để tránh lỗi Immutable Collection khi đẻ trứng
     @Override
     public List<Ability> getAbilities() {
         List<Ability> abilities = new ArrayList<>();
         if (parent1.getAbilities() != null) abilities.addAll(parent1.getAbilities());
         if (parent2.getAbilities() != null) abilities.addAll(parent2.getAbilities());
         
-        // Xóa bớt các kỹ năng trùng lặp
-        abilities = abilities.stream().distinct().collect(java.util.stream.Collectors.toList());
+        // Bọc kết quả distinct vào một ArrayList mới để có thể dùng Collections.shuffle
+        List<Ability> distinctAbilities = new ArrayList<>(
+            abilities.stream().distinct().collect(java.util.stream.Collectors.toList())
+        );
         
         // Giới hạn tối đa 2 kỹ năng
-        java.util.Collections.shuffle(abilities);
-        if (abilities.size() > 2) {
-            abilities = abilities.subList(0, 2);
+        java.util.Collections.shuffle(distinctAbilities);
+        if (distinctAbilities.size() > 2) {
+            return distinctAbilities.subList(0, 2);
         }
-        return abilities;
+        return distinctAbilities;
     }
 
     @Override

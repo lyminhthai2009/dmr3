@@ -171,21 +171,23 @@ abstract class DragonAttributeComponent extends DragonSpawnComponent {
         if (instance.getBaseValue() != value) instance.setBaseValue(value);
     }
 
-    // BỔ SUNG: Cập nhật hàm ấp trứng kèm tỷ lệ đột biến (Mutation) 15%
+    // FIX LOGIC: Tăng giới hạn đột biến lên 150% (1.5f) thay vì bị kẹt ở 100% (1.0f)
     public void setEggBreedAttributes(TameableDragonEntity mate, Supplier<DMREggBlockEntity> eggBlockEntitySupplier) {
-        // Thêm tỷ lệ đột biến +/- 0.15 (15%)
+        // Tỷ lệ đột biến +/- 15%
         float mutationRate = 0.15f;
+        // Giới hạn max đột biến là 1.5f (150% so với rồng hoang dã mạnh nhất)
+        float statCap = 1.5f; 
 
         var lowestHealth = Math.max(0.01f, Math.min(entityData.get(healthAttribute), mate.entityData.get(healthAttribute)) - mutationRate);
-        var highestHealth = Math.min(1.0f, Math.max(entityData.get(healthAttribute), mate.entityData.get(healthAttribute)) + mutationRate);
+        var highestHealth = Math.min(statCap, Math.max(entityData.get(healthAttribute), mate.entityData.get(healthAttribute)) + mutationRate);
         eggBlockEntitySupplier.get().setHealthAttribute(randomUpperLower(lowestHealth, highestHealth));
 
         var lowestSpeed = Math.max(0.01f, Math.min(entityData.get(speedAttribute), mate.entityData.get(speedAttribute)) - mutationRate);
-        var highestSpeed = Math.min(1.0f, Math.max(entityData.get(speedAttribute), mate.entityData.get(speedAttribute)) + mutationRate);
+        var highestSpeed = Math.min(statCap, Math.max(entityData.get(speedAttribute), mate.entityData.get(speedAttribute)) + mutationRate);
         eggBlockEntitySupplier.get().setSpeedAttribute(randomUpperLower(lowestSpeed, highestSpeed));
 
         var lowestDamage = Math.max(0.01f, Math.min(entityData.get(damageAttribute), mate.entityData.get(damageAttribute)) - mutationRate);
-        var highestDamage = Math.min(1.0f, Math.max(entityData.get(damageAttribute), mate.entityData.get(damageAttribute)) + mutationRate);
+        var highestDamage = Math.min(statCap, Math.max(entityData.get(damageAttribute), mate.entityData.get(damageAttribute)) + mutationRate);
         eggBlockEntitySupplier.get().setDamageAttribute(randomUpperLower(lowestDamage, highestDamage));
     }
 

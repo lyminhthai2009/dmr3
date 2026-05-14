@@ -172,13 +172,23 @@ public class TameableDragonEntity extends AbstractDragonEntity {
             updateOwnerData();
             return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        
-        // BỔ SUNG: Cho phép người chơi khác (Bạn bè) ngồi lên phía sau nếu còn chỗ
+
+        // BỔ SUNG: Cho phép người chơi khác ngồi lên phía sau nếu còn chỗ (Bắt buộc chủ nhân lái trước)
         if (isTame() && isSaddled() && !isHatchling() && !isOwnedBy(player) && this.getPassengers().size() < 2) {
-            if (isServer()) {
-                player.startRiding(this);
+            Entity firstPassenger = this.getFirstPassenger();
+            // Kiểm tra xem người đang ngồi ở ghế 1 có phải là chủ nhân không
+            if (firstPassenger instanceof Player ownerPlayer && isOwnedBy(ownerPlayer)) {
+                if (isServer()) {
+                    setRidingPlayer(player);
+                }
+                return InteractionResult.sidedSuccess(level.isClientSide);
+            } else {
+                // Báo lỗi cho người bạn biết
+                if (isServer()) {
+                    player.displayClientMessage(Component.literal("Chủ nhân của rồng phải cầm lái trước!").withStyle(net.minecraft.ChatFormatting.RED), true);
+                }
+                return InteractionResult.SUCCESS;
             }
-            return InteractionResult.sidedSuccess(level.isClientSide);
         }
 
         return super.mobInteract(player, hand);
@@ -248,7 +258,7 @@ public class TameableDragonEntity extends AbstractDragonEntity {
 
         return null;
     }
-	
+    
     @Override
     public void travel(Vec3 travelVector) {
         if (!this.isInWater() || !this.canDrownInFluidType(Fluids.WATER.getFluidType())) {
