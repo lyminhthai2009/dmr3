@@ -9,12 +9,6 @@ concurrency:
   group: ${{ github.workflow }}
   cancel-in-progress: true
 
-# BỔ SUNG QUYỀN VÀO ĐÂY ĐỂ TRÁNH LỖI "CONTENTS: WRITE"
-permissions:
-  contents: write
-  packages: write
-  pull-requests: write
-
 jobs:
   game-tests:
     uses: ./.github/workflows/game-tests.yaml
