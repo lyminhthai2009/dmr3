@@ -88,13 +88,38 @@ abstract class DragonAttributeComponent extends DragonSpawnComponent {
     public void tick() {
         super.tick();
 
-        setBaseValue(MAX_HEALTH, ServerConfig.BASE_HEALTH);
-        setBaseValue(ATTACK_DAMAGE, ServerConfig.BASE_DAMAGE);
-        setBaseValue(MOVEMENT_SPEED, DragonConstants.BASE_SPEED_GROUND * ServerConfig.BASE_WALKING_SPEED * ServerConfig.BASE_SPEED);
-        setBaseValue(FLYING_SPEED, DragonConstants.BASE_SPEED_FLYING * ServerConfig.BASE_FLYING_SPEED);
-        setBaseValue(SWIM_SPEED, DragonConstants.BASE_SPEED_WATER * ServerConfig.BASE_SWIMMING_SPEED);
+        // FIX NBT: Cập nhật hàm tick để truyền thêm "giá trị mặc định ban đầu" (DragonConstants)
+        // Điều này giúp hệ thống phân biệt được đâu là rồng tự nhiên, đâu là rồng gọi bằng lệnh VIP
+        setBaseValueSafe(MAX_HEALTH, ServerConfig.BASE_HEALTH, DragonConstants.BASE_HEALTH);
+        setBaseValueSafe(ATTACK_DAMAGE, ServerConfig.BASE_DAMAGE, DragonConstants.BASE_DAMAGE);
+        setBaseValueSafe(MOVEMENT_SPEED, DragonConstants.BASE_SPEED_GROUND * ServerConfig.BASE_WALKING_SPEED * ServerConfig.BASE_SPEED, DragonConstants.BASE_SPEED_GROUND);
+        setBaseValueSafe(FLYING_SPEED, DragonConstants.BASE_SPEED_FLYING * ServerConfig.BASE_FLYING_SPEED, DragonConstants.BASE_SPEED_FLYING);
+        setBaseValueSafe(SWIM_SPEED, DragonConstants.BASE_SPEED_WATER * ServerConfig.BASE_SWIMMING_SPEED, DragonConstants.BASE_SPEED_WATER);
 
         setRandomStats();
+    }
+
+    // FIX NBT: Hàm setBaseValueSafe thông minh (Bảo vệ NBT)
+    private void setBaseValueSafe(Holder<Attribute> attribute, double newValue, double defaultValue) {
+        AttributeInstance instance = getAttribute(attribute);
+        if (instance == null) return;
+        
+        double currentBase = instance.getBaseValue();
+        
+        // Chỉ ghi đè chỉ số NẾU chỉ số hiện tại là mặc định của Mod, HOẶC đã là số của Config.
+        // Nếu chỉ số hiện tại khác xa 2 mức này (ví dụ: máu 200 do NBT), thì bỏ qua không đè nữa.
+        if (currentBase == defaultValue || currentBase == newValue) {
+            if (currentBase != newValue) {
+                instance.setBaseValue(newValue);
+            }
+        }
+    }
+
+    // (Giữ nguyên hàm cũ đề phòng rủi ro với các file khác nếu có gọi đến)
+    private void setBaseValue(Holder<Attribute> attribute, double value) {
+        AttributeInstance instance = getAttribute(attribute);
+        if (instance == null) return;
+        if (instance.getBaseValue() != value) instance.setBaseValue(value);
     }
 
     public void setRandomStats() {
@@ -163,12 +188,6 @@ abstract class DragonAttributeComponent extends DragonSpawnComponent {
                 instance.addTransientModifier(mod);
             }
         }
-    }
-
-    private void setBaseValue(Holder<Attribute> attribute, double value) {
-        AttributeInstance instance = getAttribute(attribute);
-        if (instance == null) return;
-        if (instance.getBaseValue() != value) instance.setBaseValue(value);
     }
 
     // FIX LOGIC: Tăng giới hạn đột biến lên 150% (1.5f) thay vì bị kẹt ở 100% (1.0f)
